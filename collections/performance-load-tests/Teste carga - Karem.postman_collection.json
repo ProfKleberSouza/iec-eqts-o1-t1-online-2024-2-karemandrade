@@ -1,0 +1,971 @@
+{
+	"info": {
+		"_postman_id": "722cac4d-f4e4-43d7-b147-c22873b9f8f1",
+		"name": "Teste carga - Karem",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "9970778"
+	},
+	"item": [
+		{
+			"name": "Realizar Compra",
+			"item": [
+				{
+					"name": "Cadastrar usuário",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Validar mensagem de sucesso\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Cadastro realizado com sucesso\");\r",
+									"});\r",
+									"\r",
+									"var iterationIndex = pm.info.iteration;  // Obtém o índice da iteração atual\r",
+									"const resposta = pm.response.json();\r",
+									"pm.collectionVariables.set(\"idUsuario_\" + iterationIndex, resposta._id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Obtém o índice da iteração atual\r",
+									"var iterationIndex = pm.info.iteration;\r",
+									"\r",
+									"// Define a variável de email com base na iteração\r",
+									"var email = \"user\" + iterationIndex + \"@teste.com\";\r",
+									"\r",
+									"// Armazena o email em uma variável de coleção para uso posterior, se necessário\r",
+									"pm.collectionVariables.set(\"email\", email);\r",
+									"\r",
+									"// Base URL (Certifique-se de que {baseUrl} está definido corretamente no ambiente)\r",
+									"var baseUrl = pm.collectionVariables.get(\"baseUrl\");\r",
+									"\r",
+									"// Verifica se a variável baseUrl foi definida corretamente\r",
+									"if (!baseUrl) {\r",
+									"    console.error(\"baseUrl não está definido no ambiente.\");\r",
+									"    return;\r",
+									"}\r",
+									"\r",
+									"// Faz a requisição para listar os usuários\r",
+									"pm.sendRequest({\r",
+									"    url: baseUrl + \"/usuarios\",\r",
+									"    method: 'GET',\r",
+									"}, function (err, response) {\r",
+									"    if (err) {\r",
+									"        console.error(err);\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    // Verifica se a resposta é válida e foi recebida com sucesso\r",
+									"    if (response.code !== 200) {\r",
+									"        console.error(\"Falha ao obter a lista de usuários.\");\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    // Parseia a resposta JSON\r",
+									"    var users = response.json().usuarios;\r",
+									"\r",
+									"    // Procura pelo usuário com o email desejado\r",
+									"    var user = users.find(function (u) {\r",
+									"        return u.email === email;\r",
+									"    });\r",
+									"\r",
+									"    if (user) {\r",
+									"        // Se o usuário foi encontrado, faz a requisição para deletar\r",
+									"        pm.sendRequest({\r",
+									"            url: baseUrl + '/usuarios/' + user._id,\r",
+									"            method: 'DELETE'\r",
+									"        }, function (err, deleteResponse) {\r",
+									"            if (err) {\r",
+									"                console.error(err);\r",
+									"                return;\r",
+									"            }\r",
+									"\r",
+									"            // Confirmação de deleção\r",
+									"            console.log('Usuário deletado:', user._id);\r",
+									"            pm.test(\"Usuário foi deletado com sucesso\", function () {\r",
+									"                pm.expect(deleteResponse.code).to.be.oneOf([200, 204]);\r",
+									"            });\r",
+									"        });\r",
+									"    } else {\r",
+									"        console.log('Usuário não encontrado.');\r",
+									"        pm.test(\"Usuário não encontrado\", function () {\r",
+									"            pm.expect(user).to.be.undefined;\r",
+									"        });\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nome\": \"Usuário teste\",\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"123456\",\r\n  \"administrador\": \"false\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"usuarios"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Validar mensagem de sucesso\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Login realizado com sucesso\");\r",
+									"});\r",
+									"\r",
+									"const resposta = pm.response.json();\r",
+									"var iterationIndex = pm.info.iteration;\r",
+									"pm.collectionVariables.set(\"token_\"+ iterationIndex, resposta.authorization);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var iterationIndex = pm.info.iteration;\r",
+									"pm.collectionVariables.set(\"email\", \"user\" + iterationIndex  + \"@teste.com\");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"123456\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consultar Produtos",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/produtos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"produtos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Consultar Produto por Id",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Validar mensagem de sucesso\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Samsung 60 polegadas\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/produtos/:_id",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"produtos",
+								":_id"
+							],
+							"variable": [
+								{
+									"key": "_id",
+									"value": "{{idProduto}}"
+								}
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Adicionar produto no carrinho",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Valida mensagem de sucesso\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Cadastro realizado com sucesso\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Obtém o índice da iteração atual\r",
+									"var iterationIndex = pm.info.iteration;\r",
+									"\r",
+									"// Constrói o nome da variável com base na iteração\r",
+									"var tokenIteration = \"token_\" + iterationIndex;\r",
+									"\r",
+									"// Recupera o valor correspondente do ambiente ou coleção\r",
+									"var token = pm.collectionVariables.get(tokenIteration);\r",
+									"\r",
+									"// Define uma variável local ou de ambiente para ser usada na requisição\r",
+									"pm.variables.set(\"token\", token);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "value",
+									"value": "{{token}}",
+									"type": "string"
+								},
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"produtos\": [\r\n    {\r\n      \"idProduto\": \"{{idProduto}}\",\r\n      \"quantidade\": 3\r\n    }\r\n  ]\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/carrinhos",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"carrinhos"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Concluir compra",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code is 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Valida mensagem de sucesso\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Registro excluído com sucesso\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Obtém o índice da iteração atual\r",
+									"var iterationIndex = pm.info.iteration;\r",
+									"\r",
+									"// Constrói o nome da variável com base na iteração\r",
+									"var tokenIteration = \"token_\" + iterationIndex;\r",
+									"\r",
+									"// Recupera o valor correspondente do ambiente ou coleção\r",
+									"var token = pm.collectionVariables.get(tokenIteration);\r",
+									"\r",
+									"// Define uma variável local ou de ambiente para ser usada na requisição\r",
+									"pm.variables.set(\"token\", token);\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"auth": {
+							"type": "apikey",
+							"apikey": [
+								{
+									"key": "value",
+									"value": "{{token}}",
+									"type": "string"
+								},
+								{
+									"key": "key",
+									"value": "Authorization",
+									"type": "string"
+								},
+								{
+									"key": "in",
+									"value": "header",
+									"type": "string"
+								}
+							]
+						},
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/carrinhos/concluir-compra",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"carrinhos",
+								"concluir-compra"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "Fluxo autenticação",
+			"item": [
+				{
+					"name": "Cadastrar usuário",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 201\", function () {\r",
+									"    pm.response.to.have.status(201);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Validar mensagem de sucesso\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Cadastro realizado com sucesso\");\r",
+									"});\r",
+									"\r",
+									"var iterationIndex = pm.info.iteration;  // Obtém o índice da iteração atual\r",
+									"const resposta = pm.response.json();\r",
+									"pm.collectionVariables.set(\"idUsuario_\" + iterationIndex, resposta._id);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"// Obtém o índice da iteração atual\r",
+									"var iterationIndex = pm.info.iteration;\r",
+									"\r",
+									"// Define a variável de email com base na iteração\r",
+									"var email = \"user\" + iterationIndex + \"@teste.com\";\r",
+									"\r",
+									"// Armazena o email em uma variável de coleção para uso posterior, se necessário\r",
+									"pm.collectionVariables.set(\"email\", email);\r",
+									"\r",
+									"// Base URL (Certifique-se de que {baseUrl} está definido corretamente no ambiente)\r",
+									"var baseUrl = pm.collectionVariables.get(\"baseUrl\");\r",
+									"\r",
+									"// Verifica se a variável baseUrl foi definida corretamente\r",
+									"if (!baseUrl) {\r",
+									"    console.error(\"baseUrl não está definido no ambiente.\");\r",
+									"    return;\r",
+									"}\r",
+									"\r",
+									"// Faz a requisição para listar os usuários\r",
+									"pm.sendRequest({\r",
+									"    url: baseUrl + \"/usuarios\",\r",
+									"    method: 'GET',\r",
+									"}, function (err, response) {\r",
+									"    if (err) {\r",
+									"        console.error(err);\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    // Verifica se a resposta é válida e foi recebida com sucesso\r",
+									"    if (response.code !== 200) {\r",
+									"        console.error(\"Falha ao obter a lista de usuários.\");\r",
+									"        return;\r",
+									"    }\r",
+									"\r",
+									"    // Parseia a resposta JSON\r",
+									"    var users = response.json().usuarios;\r",
+									"\r",
+									"    // Procura pelo usuário com o email desejado\r",
+									"    var user = users.find(function (u) {\r",
+									"        return u.email === email;\r",
+									"    });\r",
+									"\r",
+									"    if (user) {\r",
+									"        // Se o usuário foi encontrado, faz a requisição para deletar\r",
+									"        pm.sendRequest({\r",
+									"            url: baseUrl + '/usuarios/' + user._id,\r",
+									"            method: 'DELETE'\r",
+									"        }, function (err, deleteResponse) {\r",
+									"            if (err) {\r",
+									"                console.error(err);\r",
+									"                return;\r",
+									"            }\r",
+									"\r",
+									"            // Confirmação de deleção\r",
+									"            console.log('Usuário deletado:', user._id);\r",
+									"            pm.test(\"Usuário foi deletado com sucesso\", function () {\r",
+									"                pm.expect(deleteResponse.code).to.be.oneOf([200, 204]);\r",
+									"            });\r",
+									"        });\r",
+									"    } else {\r",
+									"        console.log('Usuário não encontrado.');\r",
+									"        pm.test(\"Usuário não encontrado\", function () {\r",
+									"            pm.expect(user).to.be.undefined;\r",
+									"        });\r",
+									"    }\r",
+									"});\r",
+									""
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"nome\": \"Karem Andrade\",\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"123456\",\r\n  \"administrador\": \"false\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/usuarios",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"usuarios"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Login",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Validar mensagem de sucesso\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Login realizado com sucesso\");\r",
+									"});\r",
+									"\r",
+									"const resposta = pm.response.json();\r",
+									"var iterationIndex = pm.info.iteration;\r",
+									"pm.collectionVariables.set(\"token_\"+ iterationIndex, resposta.authorization);"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						},
+						{
+							"listen": "prerequest",
+							"script": {
+								"exec": [
+									"var iterationIndex = pm.info.iteration;\r",
+									"pm.collectionVariables.set(\"email\", \"user\" + iterationIndex  + \"@teste.com\");"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"123456\"\r\n}\r\n",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{baseUrl}}/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"login"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Excluir usuário",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Status code é 200\", function () {\r",
+									"    pm.response.to.have.status(200);\r",
+									"});\r",
+									"\r",
+									"pm.test(\"Validar mensagem de sucesso\", function () {\r",
+									"    pm.expect(pm.response.text()).to.include(\"Registro excluído com sucesso\");\r",
+									"});"
+								],
+								"type": "text/javascript",
+								"packages": {}
+							}
+						}
+					],
+					"request": {
+						"method": "DELETE",
+						"header": [
+							{
+								"key": "Accept",
+								"value": "application/json"
+							}
+						],
+						"url": {
+							"raw": "{{baseUrl}}/usuarios/:idUsuario",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"usuarios",
+								":idUsuario"
+							],
+							"variable": [
+								{
+									"key": "idUsuario",
+									"value": "{{idUsuario}}"
+								}
+							]
+						},
+						"description": "Não é permitido excluir usuário com carrinho."
+					},
+					"response": [
+						{
+							"name": "Registro excluído com sucesso | Nenhum registro excluído",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/usuarios/:_id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios",
+										":_id"
+									],
+									"variable": [
+										{
+											"key": "_id"
+										}
+									]
+								}
+							},
+							"status": "OK",
+							"code": 200,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"<string>\"\n}"
+						},
+						{
+							"name": "Usuário com carrinho cadastrado",
+							"originalRequest": {
+								"method": "DELETE",
+								"header": [
+									{
+										"key": "Accept",
+										"value": "application/json"
+									}
+								],
+								"url": {
+									"raw": "{{baseUrl}}/usuarios/:_id",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"usuarios",
+										":_id"
+									],
+									"variable": [
+										{
+											"key": "_id"
+										}
+									]
+								}
+							},
+							"status": "Bad Request",
+							"code": 400,
+							"_postman_previewlanguage": "json",
+							"header": [
+								{
+									"key": "Content-Type",
+									"value": "application/json"
+								}
+							],
+							"cookie": [],
+							"body": "{\n  \"message\": \"<string>\",\n  \"idCarrinho\": \"<string>\"\n}"
+						}
+					]
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					"pm.test(\"Tempo de resposta é aceitável\", function () {\r",
+					"    pm.expect(pm.response.responseTime).to.be.below(200);\r",
+					"});"
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "idUsuario",
+			"value": "iIjVbpuNceWl2vn4",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "idProduto",
+			"value": "K6leHdftCeOJj8BJ",
+			"type": "string"
+		},
+		{
+			"key": "idCarrinho",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "qtdProduto",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "idUsuario_0",
+			"value": ""
+		},
+		{
+			"key": "emailUsuarioAtual",
+			"value": ""
+		},
+		{
+			"key": "email",
+			"value": ""
+		},
+		{
+			"key": "token_0",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_1",
+			"value": ""
+		},
+		{
+			"key": "token_1",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_2",
+			"value": ""
+		},
+		{
+			"key": "token_2",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_3",
+			"value": ""
+		},
+		{
+			"key": "token_3",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_4",
+			"value": ""
+		},
+		{
+			"key": "token_4",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_5",
+			"value": ""
+		},
+		{
+			"key": "token_5",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_6",
+			"value": ""
+		},
+		{
+			"key": "token_6",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_7",
+			"value": ""
+		},
+		{
+			"key": "token_7",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_8",
+			"value": ""
+		},
+		{
+			"key": "token_8",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_9",
+			"value": ""
+		},
+		{
+			"key": "token_9",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_10",
+			"value": ""
+		},
+		{
+			"key": "token_10",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_11",
+			"value": ""
+		},
+		{
+			"key": "token_11",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_12",
+			"value": ""
+		},
+		{
+			"key": "token_12",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_13",
+			"value": ""
+		},
+		{
+			"key": "token_13",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_14",
+			"value": ""
+		},
+		{
+			"key": "token_14",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_15",
+			"value": ""
+		},
+		{
+			"key": "token_15",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_16",
+			"value": ""
+		},
+		{
+			"key": "token_16",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_17",
+			"value": ""
+		},
+		{
+			"key": "token_17",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_18",
+			"value": ""
+		},
+		{
+			"key": "token_18",
+			"value": ""
+		},
+		{
+			"key": "idUsuario_19",
+			"value": ""
+		},
+		{
+			"key": "token_19",
+			"value": ""
+		}
+	]
+}
