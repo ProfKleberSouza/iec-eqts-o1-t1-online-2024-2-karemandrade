@@ -1,0 +1,311 @@
+{
+	"info": {
+		"_postman_id": "799d4b53-95c4-4ef1-be38-d3cda20a1523",
+		"name": "Teste seguranca - Karem",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "9970778"
+	},
+	"item": [
+		{
+			"name": "Cadastrar usuário",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"const resposta = pm.response.json();\r",
+							"pm.collectionVariables.set(\"idUsuario\", resposta._id);"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// Define a variável de email com base na iteração\r",
+							"var email = \"admin@pucminas.br\";\r",
+							"\r",
+							"// Armazena o email em uma variável de coleção para uso posterior, se necessário\r",
+							"pm.collectionVariables.set(\"email\", email);\r",
+							"\r",
+							"// Base URL (Certifique-se de que {baseUrl} está definido corretamente no ambiente)\r",
+							"var baseUrl = pm.collectionVariables.get(\"baseUrl\");\r",
+							"\r",
+							"// Verifica se a variável baseUrl foi definida corretamente\r",
+							"if (!baseUrl) {\r",
+							"    console.error(\"baseUrl não está definido no ambiente.\");\r",
+							"    return;\r",
+							"}\r",
+							"\r",
+							"// Faz a requisição para listar os usuários\r",
+							"pm.sendRequest({\r",
+							"    url: baseUrl + \"/usuarios\",\r",
+							"    method: 'GET',\r",
+							"}, function (err, response) {\r",
+							"    if (err) {\r",
+							"        console.error(err);\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    // Verifica se a resposta é válida e foi recebida com sucesso\r",
+							"    if (response.code !== 200) {\r",
+							"        console.error(\"Falha ao obter a lista de usuários.\");\r",
+							"        return;\r",
+							"    }\r",
+							"\r",
+							"    // Parseia a resposta JSON\r",
+							"    var users = response.json().usuarios;\r",
+							"\r",
+							"    // Procura pelo usuário com o email desejado\r",
+							"    var user = users.find(function (u) {\r",
+							"        return u.email === email;\r",
+							"    });\r",
+							"\r",
+							"    if (user) {\r",
+							"        // Se o usuário foi encontrado, faz a requisição para deletar\r",
+							"        pm.sendRequest({\r",
+							"            url: baseUrl + '/usuarios/' + user._id,\r",
+							"            method: 'DELETE'\r",
+							"        }, function (err, deleteResponse) {\r",
+							"            if (err) {\r",
+							"                console.error(err);\r",
+							"                return;\r",
+							"            }\r",
+							"\r",
+							"            // Confirmação de deleção\r",
+							"            console.log('Usuário deletado:', user._id);\r",
+							"            pm.test(\"Usuário foi deletado com sucesso\", function () {\r",
+							"                pm.expect(deleteResponse.code).to.be.oneOf([200, 204]);\r",
+							"            });\r",
+							"        });\r",
+							"    } else {\r",
+							"        console.log('Usuário não encontrado.');\r",
+							"        pm.test(\"Usuário não encontrado\", function () {\r",
+							"            pm.expect(user).to.be.undefined;\r",
+							"        });\r",
+							"    }\r",
+							"});\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"nome\": \"Karem Andrade\",\r\n  \"email\": \"{{email}}\",\r\n  \"password\": \"pucminas\",\r\n  \"administrador\": \"true\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/usuarios",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"usuarios"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Login com email e senha invalidos",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Status code é 401\", function () {\r",
+							"    pm.response.to.have.status(401);\r",
+							"});\r",
+							"\r",
+							"pm.test(\"Validar mensagem de sucesso\", function () {\r",
+							"    pm.expect(pm.response.text()).to.include(\"Email e/ou senha inválidos\");\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"email\": \"klebersouza@pucminas.br\",\r\n  \"password\": \"' OR '1'='1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/login",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Cadastrar Produto sem token",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Acesso negado sem autenticação\", function () {\r",
+							"    pm.response.to.have.status(401);\r",
+							"});\r",
+							"\r",
+							""
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "apikey",
+					"apikey": [
+						{
+							"key": "value",
+							"value": "{{token}}",
+							"type": "string"
+						},
+						{
+							"key": "key",
+							"value": "Authorization",
+							"type": "string"
+						},
+						{
+							"key": "in",
+							"value": "header",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n  \"nome\": \"Produto para teste'; DROP TABLE produtos; --\",\r\n  \"preco\": 95.99,\r\n  \"descricao\": \"injeção SQL\",\r\n  \"quantidade\": 5\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{baseUrl}}/produtos",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"produtos"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Listar usuarios - validar dados sensiveis",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.test(\"Validação da estrutura de resposta - Listagem de Produtos\", function () {\r",
+							"    var jsonData = pm.response.json();\r",
+							"    pm.expect(jsonData).to.be.an(\"object\");\r",
+							"    pm.expect(jsonData).to.have.property(\"quantidade\").that.is.a(\"number\");\r",
+							"    pm.expect(jsonData).to.have.property(\"usuarios\").that.is.an(\"array\");\r",
+							"    \r",
+							"    jsonData.usuarios.forEach(function(usuario) {\r",
+							"        pm.expect(usuario).to.be.an(\"object\");\r",
+							"        pm.expect(usuario).to.not.have.property(\"password\");\r",
+							"    });\r",
+							"});"
+						],
+						"type": "text/javascript",
+						"packages": {}
+					}
+				}
+			],
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "{{baseUrl}}/usuarios",
+					"host": [
+						"{{baseUrl}}"
+					],
+					"path": [
+						"usuarios"
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"packages": {},
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:3000",
+			"type": "string"
+		},
+		{
+			"key": "idUsuario",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "token",
+			"value": "",
+			"type": "string"
+		},
+		{
+			"key": "email",
+			"value": "",
+			"type": "string"
+		}
+	]
+}
